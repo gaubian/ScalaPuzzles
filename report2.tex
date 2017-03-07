@@ -1,0 +1,195 @@
+% Classe de document.
+\documentclass[a4paper]{article}
+
+
+%%% ENCODAGE ET LANGUES %%%
+% Encodage de l'entrée.
+\usepackage[utf8]{inputenc}
+
+% Encodage de la police.
+\usepackage[T1]{fontenc}
+
+% Langues à charger.
+\usepackage[francais]{babel}
+\frenchbsetup{og=«,fg=»}
+
+\newcommand\ttt\texttt
+
+%%% AUTRES PAQUETS %%%
+\usepackage{hyperref}
+
+\title{Projet Programmation 2, partie 2}
+\author{Glen \textsc{Mével} \& Guillaume \textsc{Aubian}}
+\date{8 avril 2015}
+
+\begin{document}
+
+\maketitle
+
+	\begin{abstract}
+	Voici le rapport de notre projet Programmation 2 trouvable ici:
+	\url{https://github.com/gmevel/ScalaPuzzles}.
+	\end{abstract}
+
+\section*{Introduction}
+
+	\paragraph{}
+	Les trois jeux que nous avons choisis sont \textsl{Flip}, \textsl{Unruly} et
+	\textsl{Flood}. Le jeu \textsl{Minesweeper} n'a pas été modifié sauf pour
+	re-factoriser le code de l’interface graphique.
+
+	\section{Interface}
+
+	\paragraph{}
+	Le degré de réutilisabilité que nous avions obtenu lors de la partie 1 était
+	très insuffisant pour la suite (seul la grille de base était générique).
+	Nous avons donc largement approfondi ce point. Le code des interfaces
+	graphiques des différents jeux est maintenant très factorisé et il ne reste
+	que les portions complètement spécifiques à chaque jeu.
+
+	\paragraph{}
+	Pour chaque jeu, une partie est implémentée par une classe \ttt{Board} qui
+	suit le trait \ttt{Game.Board}. Elle ne gère que le cœur du jeu sans aucun
+	affichage, qui est effectué par les classes suivantes.
+
+	\subsection{La classe \ttt{Game.BoardUI} pour une partie de jeu}
+
+	\paragraph{}
+	Nous avons repris la classe générique \ttt{GridUI} qui affiche une grille,
+	mais celle-ci n’est plus utilisée directement par les jeux. Nous avons
+	introduit la classe abstraite \ttt{Game.BoardUI} pour implémenter une
+	interface générique d’une partie de jeu (donnée en paramètre)~; elle
+	contient une grille de type \ttt{Util.GridUI}, ainsi qu’une barre de statut
+	avec le bouton-smiley, le bouton « restart » et le chronomètre. Cette classe
+	abstraite gère entre autres l’action du bouton-smiley en fonction de l’état
+	du jeu. On l’étend pour définir les actions possibles et le traitement des
+	événements spécifiques à chaque jeu.
+
+	\subsection{La classe \ttt{Game.UI} pour une interface de jeu complète}
+
+	\paragraph{}
+	Nous avons ensuite une classe abstraite \ttt{Game.UI} qui crée l’interface
+	complète d’un jeu, avec les menus pour lancer une nouvelle partie, la
+	fenêtre de configuration personnalisée, la fenêtre d’aide et la partie
+	actuelle (un composant Swing de type \ttt{Game.BoardUI}).
+
+	\paragraph{}
+	On étend la classe \ttt{Game.UI} en renseignant les méthodes et valeurs
+	utiles pour l’interface d’un jeu (cette classe impose implicitement une
+	structure de code commune à tous les jeux). Entre autres, on précise quels
+	sont les paramêtres d’une partie (largeur, hauteur, etc.), et les
+	éventuelles contraintes associées (par exemple, il ne doit pas y avoir dans
+	une partie de démineur plus de mines que de cases dans la grille). Ces
+	données permettent à la classe \ttt{Game.UI} de proposer différents modes de
+	jeu prédéfinis et de générer automatiquement la fenêtre de partie
+	personnalisée.
+
+	\paragraph{}
+	Initialement, nous avions cherché à réaliser un système de paramètres
+	pouvant être de différents types~: entiers, booléens, chaînes de caractères
+	ou variantes. C’était fastidieux, et la méthode la plus économique
+	nécessitait des conversions explicites de type. Finalement, il est apparu
+	que nous n’avions besoin que de paramètres entiers (hormis la graine
+	alphanumérique, mais elle est commune à tous les jeux et nous ne l’incluons
+	pas dans les paramètres), et nous avons donc renoncé à ce système dans toute
+	sa généralité.
+
+	\subsection{La fenêtre principale}
+
+	\paragraph{}
+	Enfin, l’interface racine est implémentée par l’objet \ttt{Main}. Il affiche
+	un écran d’accueil et permet de choisir entre les différents jeux.
+	L’interface est implémentée sous forme d’onglets, un par jeu. Sélectionner
+	l’onglet d’un jeu lance automatiquement une partie. Afin que la fenêtre
+	prenne la taille la plus adaptée à l’onglet actuel sans tenir compte de la
+	taille des onglets inactifs, nous avons dû définir notre propre composant
+	Swing (\ttt{Util.ResponsiveTabbedPane}) en étendant le composant existant
+	(\ttt{TabbedPane}).
+
+	\subsection{Structure du code}
+
+	\paragraph{}
+	Le code de chaque jeu est divisé comme suit~:
+	\begin{itemize}
+		\item un fichier \ttt{Board.scala} implémentant le cœur du jeu (la
+			classe \ttt{Board}),
+		\item un fichier \ttt{BoardUI.scala} implémentant l’interface graphique
+			d’une partie (la classe \ttt{BoardUI}),
+		\item et un fichier \ttt{UI.scala} implémentant l’interface complète du
+			jeu (l’objet \ttt{UI}).
+	\end{itemize}
+	Le tout est regroupé dans un paquet portant le nom du jeu. Le paquet
+	\ttt{Game}, définissant les classes génériques correspondantes, suit la même
+	structure.
+
+	\paragraph{}
+	Les classes et méthodes utiles mais sans rapport direct avec le projet sont
+	rangées dans un paquet \ttt{Util}.
+
+\section{Jeux}
+
+	\paragraph{}
+	Dans chacun des jeux que nous avons codés, nous avons implémenté la
+	possibilité de recommencer la partie, ce que nous faisons à chaque fois en
+	recopiant la matrice qui représente la grille, et en stockant de coté toutes
+	les variables du jeu en question.
+
+	\subsection{\textsl{Flip}}
+
+	\paragraph{}
+	Nous n'avons pas rencontré de difficulté particulière pour l'implémentation
+	du jeu \textsl{Flip}. La seule astuce que nous avons utilisée consiste à
+	compter le nombre de cases qu'il reste à retourner, en mettant à jour ce
+	compteur lors de chaque mouvement. Ainsi, tester si la partie est terminée
+	revient à regarder si ce compteur est nul.
+
+	\paragraph{}
+	Nous proposons aussi la possibilité de revenir en arrière (avec le bouton
+	smiley). L’historique s'implémente aisément avec une pile.
+
+	\subsection{\textsl{Unruly}}
+
+	\paragraph{}
+	La principale difficulté de \textsl{Unruly} est de générer les grilles de
+	manière à s'assurer qu'il existe au moins une solution. Pour cela, notre
+	stratégie consiste à créer une grille solution, puis à enlever des cases au
+	hasard dans cette grille (une proportion de cases révélées de $1/3$ nous a
+	semblé satisfaisante).
+
+	\paragraph{}
+	Pour créer notre grille solution, nous avons procédé par backtracking~:
+	étant donnée une case, on la colorie aléatoirement, et on essaie de remplir
+	le reste de la grille par récurrence. Si ce n’est pas possible, on réessaie
+	en coloriant la-dite case de l'autre couleur. Si ce n’est toujours pas
+	possible, c'est qu'il n'y a plus de grille possible.
+
+	\paragraph{}
+	On doit vérifier après chaque coup sa validité et si le jeu est terminé.
+	Pour le second test, une technique efficace consiste à mémoriser le nombre
+	de cases vides dans une variable nommée \ttt{voidC}, que l'on met à jour
+	à chaque coup. Ainsi, la condition de victoire s’écrit simplement
+	\ttt{voidC == 0}. Pour s’assurer que la partie se termine effectivement
+	lorsque toutes les cases sont coloriées, on n’autorise que les coups
+	valides.
+
+	\paragraph{}
+	Nous avons implémenté la possibilité d'abandonner la partie en cours, et de
+	voir la solution, avec le bouton smiley.
+
+	\subsection{\textsl{Flood}}
+
+	\paragraph{}
+	Il s'agit du jeu le plus difficile à coder des trois. En plus de leur
+	couleur, on mémorise pour chaque cellule si elle appartient à la zone
+	« contrôlée ». Par ailleurs, on maintient une liste des cases contrôlées et
+	une pile des cases qui sont à la frontière de la zone controlée.
+
+	\paragraph{}
+	La mise à jour de la zone contrôlée et de sa frontière se fait grâce à la
+	fonction \ttt{expandCell} qui, étant donnée une case, la marque comme
+	contrôlée, l’ajoute (ou la laisse) dans la frontière si elle a au moins une
+	voisine de couleur différente, puis s'applique à toutes ses voisines qui de
+	même couleur et non contrôlées. Étendre la zone revient donc à appliquer
+	\ttt{expandCell} sur toutes les cases à la frontière.
+
+\end{document}
